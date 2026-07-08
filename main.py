@@ -6,6 +6,7 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 import uuid
 import time
+import os 
 
 app = FastAPI()
 
@@ -43,7 +44,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[ALLOWED_ORIGIN],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -127,3 +128,75 @@ def verify(data: TokenRequest):
                 "valid": False
             },
         )
+    
+# -----------------------------
+# Question 3
+# -----------------------------
+@app.get("/effective-config")
+def effective_config(set: list[str] = Query(default=[])):
+
+    # -----------------------
+    # Defaults
+    # -----------------------
+    config = {
+        "port": 8000,
+        "workers": 1,
+        "debug": False,
+        "log_level": "info",
+        "api_key": "default-secret-000",
+    }
+
+    # -----------------------
+    # YAML
+    # -----------------------
+    config.update({
+        "workers": 14,
+        "debug": True,
+    })
+
+    # -----------------------
+    # .env
+    # -----------------------
+    config["workers"] = 15
+    config["debug"] = True
+    config["log_level"] = "info"
+
+    # -----------------------
+    # OS Environment
+    # -----------------------
+    config["port"] = int(os.getenv("APP_PORT", 8287))
+    config["workers"] = int(os.getenv("APP_WORKERS", 11))
+
+    debug = os.getenv("APP_DEBUG", "false").lower()
+    config["debug"] = debug in ("true", "1", "yes", "on")
+
+    # -----------------------
+    # CLI Overrides
+    # -----------------------
+    for item in set:
+
+        if "=" not in item:
+            continue
+
+        key, value = item.split("=", 1)
+
+        if key in ("port", "workers"):
+            config[key] = int(value)
+
+        elif key == "debug":
+            config[key] = value.lower() in (
+                "true",
+                "1",
+                "yes",
+                "on",
+            )
+
+        else:
+            config[key] = value
+
+    # -----------------------
+    # Mask Secret
+    # -----------------------
+    config["api_key"] = "****"
+
+    return config
