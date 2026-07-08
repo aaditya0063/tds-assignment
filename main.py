@@ -121,11 +121,11 @@ def verify(data: TokenRequest):
             "aud": payload.get("aud"),
         }
 
-    except InvalidTokenError:
+    except Exception:
 
-        return JSONResponse(
-            status_code=401,
-            content={
-                "valid": False
-            },
-        )
+    return JSONResponse(
+        status_code=401,
+        content={
+            "valid": False
+        },
+    )
