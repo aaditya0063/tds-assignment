@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import uuid
 import time
 
@@ -47,7 +46,13 @@ def home():
 
 @app.get("/stats")
 def stats(values: str = Query(...)):
-    numbers = [int(x) for x in values.split(",")]
+    try:
+        numbers = [int(x.strip()) for x in values.split(",") if x.strip()]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="All values must be integers.")
+
+    if not numbers:
+        raise HTTPException(status_code=400, detail="Provide at least one integer.")
 
     return {
         "email": EMAIL,
