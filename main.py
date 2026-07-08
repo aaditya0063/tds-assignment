@@ -105,7 +105,6 @@ def stats(values: str = Query(...)):
 def verify(data: TokenRequest):
 
     try:
-
         payload = jwt.decode(
             data.token,
             PUBLIC_KEY,
@@ -121,11 +120,10 @@ def verify(data: TokenRequest):
             "aud": payload.get("aud"),
         }
 
-    except Exception:
-
-    return JSONResponse(
-        status_code=401,
-        content={
-            "valid": False
-        },
-    )
+    except InvalidTokenError:
+        return JSONResponse(
+            status_code=401,
+            content={
+                "valid": False
+            },
+        )
